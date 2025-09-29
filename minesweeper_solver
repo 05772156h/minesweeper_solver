@@ -1,0 +1,264 @@
+import tkinter as tk
+
+m = int(input("Enter the number of rows: "))
+n = int(input("Enter the number of columns: "))
+state_list = []
+prob_list = []
+entry_list = []
+stringvar_list = []
+out = True
+
+def cal_prob():
+    print('-' * 20)
+    out = True
+    for i in range((n + 2) * (m + 2)):
+        prob_list[i] = 0
+        state_list[i] = entry_list[i].get()
+        entry_list[i]['foreground'] = 'black'
+        entry_list[i]['background'] = 'white'
+        if state_list[i] == '-1':
+            entry_list[i]['background'] = 'yellow'
+        elif state_list[i] == '':
+            entry_list[i]['background'] = 'cyan'
+        elif state_list[i] == '0':
+            entry_list[i]['foreground'] = 'black'
+        elif state_list[i] == '1':
+            entry_list[i]['foreground'] = 'blue'
+        elif state_list[i] == '2':
+            entry_list[i]['foreground'] = 'green'
+        elif state_list[i] == '3':
+            entry_list[i]['foreground'] = 'orange'
+        elif state_list[i] == '4':
+            entry_list[i]['foreground'] = 'purple'
+        else:
+            entry_list[i]['foreground'] = 'red'
+
+    count_list_list = []
+    num_list = []
+
+
+
+    for i in range(m):
+        for j in range(n):
+            state = state_list[n + 3 + j + (n + 2) * i]
+            # ''表示未知，'0'表示空位，'-1'表示雷，'2~8'表示周围雷数
+            if state != '' and state != '0' and state != '-1':
+                # 收集该数字格周围剩余的雷数与空格数
+                num = int(state)
+                count = 0
+                count_list = []
+                for s in range(3):
+                    for t in range(3):
+                        if state_list[(n + 2) * s + t + j + (n + 2) * i] == '':
+                            count += 1
+                            count_list.append((n + 2) * s + t + j + (n + 2) * i)
+                        if state_list[(n + 2) * s + t + j + (n + 2) * i] == '-1':
+                            num -= 1
+                if num == 0 and count != 0:
+                    out = False
+                    for place in count_list:
+                        # i_0 = place // (n + 2) - 1
+                        # j_0 = place % (n + 2) - 1
+                        # print('{}行{}列处不是雷'.format(i_0 + 1, j_0 + 1))
+                        entry_list[place]['background'] = 'green'
+                if num == count and num != 0:
+                    out = False
+                    for place in count_list:
+                        # i_0 = place // (n + 2) - 1
+                        # j_0 = place % (n + 2) - 1
+                        # print('{}行{}列处是雷'.format(i_0 + 1, j_0 + 1))
+                        entry_list[place]['background'] = 'red'
+                        stringvar_list[place].set('-1')
+                if num !=0:
+                    for place in count_list:
+                        prob_list[place] += num / count
+                if num != 0 and num != count:
+                    count_list_list.append(count_list)
+                    num_list.append(num)
+
+                if num > count or num<0:
+                    print('{}行{}列报错'.format(i + 1, j + 1))
+                    entry_list[n + 3 + j + (n + 2) * i]['background'] = 'purple'
+
+
+
+    stop = False
+    num_list_save = []
+    count_list_list_save = []
+
+    time = 0
+
+    while not stop:
+        time += 1
+
+        print(time)
+        print(len(num_list))
+        print(num_list, count_list_list)
+
+        stop = True
+        save_list = []
+        for i in range(len(num_list)):
+            save_list.append(True)
+        for i in range(len(num_list)):
+
+            # 一定要这个判断，不然会爆炸，经典情形4~6~15~105~5460~14903070
+            if save_list[i] == True:
+
+                # 平凡情况的自检
+                if num_list[i] == 0:
+                    save_list[i] = False
+                    for place in count_list_list[i]:
+                        entry_list[place]['background'] = 'green'
+                if num_list[i] == len(count_list_list[i]):
+                    save_list[i] = False
+                    for place in count_list_list[i]:
+                        entry_list[place]['background'] = 'red'
+                        stringvar_list[place].set('-1')
+
+                # 互检
+                for j in range(i + 1, len(num_list)):
+                    only_i = []
+                    only_j = []
+                    i_and_j = []
+
+                    # 提取出i和j中重复出现的和单独具有的格子
+                    for place in count_list_list[i]:
+                        if place in count_list_list[j]:
+                            i_and_j.append(place)
+                        else:
+                            only_i.append(place)
+                    for place in count_list_list[j]:
+                        if not place in i_and_j:
+                            only_j.append(place)
+
+                    # 两种可确定有雷和没雷的情况
+                    if num_list[j] - len(only_j) == num_list[i]:
+                        stop = False
+                        save_list[i] = False
+                        save_list[j] = False
+                        num_list_save.append(num_list[i])
+                        count_list_list_save.append(i_and_j)
+                        if len(only_i) != 0 or len(only_j) !=0:
+                            out = False
+                        for place in only_i:
+                            # i_0 = place // (n + 2) - 1
+                            # j_0 = place % (n + 2) - 1
+                            # print('{}行{}列处不是雷'.format(i_0 + 1, j_0 + 1))
+                            entry_list[place]['background'] = 'green'
+                        for place in only_j:
+                            # i_0 = place // (n + 2) - 1
+                            # j_0 = place % (n + 2) - 1
+                            # print('{}行{}列处是雷'.format(i_0 + 1, j_0 + 1))
+                            entry_list[place]['background'] = 'red'
+                            stringvar_list[place].set('-1')
+
+                    elif num_list[i] - len(only_i) == num_list[j]:
+                        stop = False
+                        save_list[i] = False
+                        save_list[j] = False
+                        num_list_save.append(num_list[j])
+                        count_list_list_save.append(i_and_j)
+                        if len(only_i) != 0 or len(only_j) !=0:
+                            out = False
+                        for place in only_j:
+                            # i_0 = place // (n + 2) - 1
+                            # j_0 = place % (n + 2) - 1
+                            # print('{}行{}列处不是雷'.format(i_0 + 1, j_0 + 1))
+                            entry_list[place]['background'] = 'green'
+                        for place in only_i:
+                            # i_0 = place // (n + 2) - 1
+                            # j_0 = place % (n + 2) - 1
+                            # print('{}行{}列处是雷'.format(i_0 + 1, j_0 + 1))
+                            entry_list[place]['background'] = 'red'
+                            stringvar_list[place].set('-1')
+
+                    # 两种可化简的情况
+                    elif len(only_i) == 0 and len(only_j) != 0 and len(i_and_j) != 0:
+                        stop = False
+                        save_list[i] = False
+                        save_list[j] = False
+                        num_list_save.append(num_list[i])
+                        count_list_list_save.append(i_and_j)
+                        num_list_save.append(num_list[j] - num_list[i])
+                        count_list_list_save.append(only_j)
+
+                    elif len(only_j) == 0 and len(only_i) != 0 and len(i_and_j) != 0:
+                        stop = False
+                        save_list[i] = False
+                        save_list[j] = False
+                        num_list_save.append(num_list[j])
+                        count_list_list_save.append(i_and_j)
+                        num_list_save.append(num_list[i] - num_list[j])
+                        count_list_list_save.append(only_i)
+
+                    # 删除重复的i和j中的j
+                    # elif len(only_j) == 0 and len(only_i) == 0:
+                    #     save_list[j] = False
+
+
+            if save_list[i] == True:
+                num_list_save.append(num_list[i])
+                count_list_list_save.append(count_list_list[i])
+
+        count_list_list = []
+        num_list = []
+        for i in range(len(num_list_save)):
+            count_list_list.append(count_list_list_save[i])
+            num_list.append(num_list_save[i])
+        num_list_save = []
+        count_list_list_save = []
+        # if time > 10:
+        #     stop = True
+            # print(num_list, count_list_list)
+
+
+    if out == True:
+        max_prob = max(prob_list)
+        for i in range(m):
+            for j in range(n):
+                if prob_list[n + 3 + j + (n + 2) * i] == max_prob:
+                    print('{}行{}列处最有可能是雷'.format(i + 1, j + 1))
+                    entry_list[n + 3 + j + (n + 2) * i]['background'] = 'orange'
+
+def reset():
+    for i in range((n + 2) * (m + 2)):
+        stringvar_list[i].set('0')
+        entry_list[i]['background'] = 'white'
+        entry_list[i]['foreground'] = 'black'
+    for i in range(m):
+        for j in range(n):
+            stringvar_list[n + 3 + j + (n + 2) * i].set('')
+
+
+root = tk.Tk()
+root.geometry("{}x{}".format(30 * n, 30 * m + 60))
+root.title("Minesweeper Solver")
+root.resizable(False, False)
+
+for i in range((n + 2) * (m + 2)):
+    state_list.append('')
+    prob_list.append(0)
+    stringvar_list.append(tk.StringVar())
+    entry_list.append(tk.Entry(root, textvariable=stringvar_list[i], width=3))
+    stringvar_list.append(tk.StringVar())
+
+for i in range(m):
+    for j in range(n):
+        entry_list[n + 3 + j + (n + 2) * i].place(x=30 * j, y=30 * i)
+
+for i in range((n + 2) * (m + 2)):
+    stringvar_list[i].set('0')
+for i in range(m):
+    for j in range(n):
+        stringvar_list[n + 3 + j + (n + 2) * i].set('')
+
+tk.Button(root, text="Solve", command=cal_prob).place(x=20 * n, y=30 * m + 10)
+tk.Button(root, text="Reset", command=reset).place(x=10 * n, y=30 * m + 10)
+
+root.mainloop()
+
+
+
+
+
+
